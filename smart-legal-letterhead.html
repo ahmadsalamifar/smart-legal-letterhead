@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart AI Letterhead - Fixed</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: #001f3f; 
+            --accent-color: #cca43b; 
+            --header-height: 50mm;   
+            --footer-height: 25mm;   
+            --page-margins: 20mm;    
+            --ai-color: #7c3aed;
+        }
+        
+        /* --- General Reset & Typography --- */
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            margin: 0;
+            padding-top: 85px; 
+            padding-bottom: 20px;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        
+        .lang-en { font-family: sans-serif; direction: ltr; }
+        .lang-en .content-body { text-align: left; }
+        .lang-en .meta-value { font-family: sans-serif; }
+
+        /* --- UI Components (Toolbar) --- */
+        .editor-toolbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 75px;
+            background: white; border-bottom: 1px solid #e5e7eb;
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 1000; padding: 0 20px;
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .toolbar-section {
+            display: flex; align-items: center; gap: 8px;
+            padding: 0 12px;
+            border-left: 1px solid #f3f4f6;
+        }
+        .toolbar-section:last-child { border-left: none; }
+        .lang-en .toolbar-section { border-left: none; border-right: 1px solid #f3f4f6; }
+
+        .section-label {
+            font-size: 10px; color: #9ca3af; font-weight: bold; text-transform: uppercase;
+            display: block; margin-bottom: 4px;
+        }
+        
+        .tool-btn {
+            @apply flex items-center justify-center w-9 h-9 rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-blue-600 cursor-pointer text-sm border border-transparent;
+        }
+        .tool-btn:hover { border-color: #e5e7eb; }
+        .tool-btn.active { @apply bg-blue-50 text-blue-700 border-blue-200; }
+        
+        .btn-ai {
+            @apply px-4 w-auto gap-3 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 font-medium text-xs rounded-lg h-9 transition-colors flex items-center;
+        }
+
+        .select-clean {
+            @apply text-sm border border-gray-200 rounded-lg px-2 h-9 bg-gray-50 outline-none focus:border-blue-500 cursor-pointer text-gray-700 font-medium hover:bg-white transition-colors;
+        }
+
+        /* --- Color Picker --- */
+        .color-menu {
+            position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+            margin-top: 10px; background: white; border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 10px; border-radius: 12px; display: none; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            z-index: 2000; width: 140px;
+        }
+        .color-menu.show { display: grid; }
+        .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .color-dot:hover { transform: scale(1.15); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        /* --- Page Layout (A4) --- */
+        .main-container {
+            width: 210mm; min-height: 297mm; margin: 0 auto;
+            background: white; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative; /* Keep relative for screen layout */
+            display: flex; flex-direction: column; 
+        }
+
+        /* Print Layout Strategy */
+        table.print-layout { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        thead.print-header { display: table-header-group; }
+        tfoot.print-footer { display: table-footer-group; }
+        
+        .header-space { height: var(--header-height); }
+        .footer-space { height: var(--footer-height); }
+
+        /* --- Header Styling --- */
+        .header-fixed {
+            position: absolute; top: 0; left: 0; width: 100%; height: var(--header-height);
+            z-index: 50; 
+        }
+
+        .header-content {
+            width: 100%; height: 100%;
+            background-color: var(--primary-color); color: white;
+            padding: 0 15mm; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3mm solid var(--accent-color); overflow: hidden;
+            transition: background-color 0.3s;
+            -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+            position: relative;
+        }
+        .header-bg {
+            position: absolute; top: 0; left: 0; width: 40%; height: 100%;
+            background: linear-gradient(120deg, transparent 60%, rgba(255,255,255,0.05) 60%);
+            pointer-events: none;
+        }
+
+        /* --- Footer Styling --- */
+        .footer-fixed {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: var(--footer-height);
+            z-index: 50;
+        }
+
+        .footer-content {
+            width: 100%; height: 100%;
+            background-color: white; border-top: 1px solid #e2e8f0; border-bottom: 4mm solid var(--primary-color);
+            padding: 0 15mm; display: flex; justify-content: space-between; align-items: center;
+            transition: border-bottom-color 0.3s;
+            -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+        }
+
+        /* --- Content Body (The Editor) --- */
+        .content-body {
+            padding: 5mm var(--page-margins);
+            font-size: 12pt; line-height: 1.8; text-align: justify;
+            outline: none; flex-grow: 1;
+            /* Text Wrapping Logic */
+            white-space: pre-wrap;       
+            word-wrap: break-word;       
+            overflow-wrap: break-word;   
+            word-break: break-word;      
+            width: 100%;
+        }
+
+        /* --- Editable Elements --- */
+        .company-name { font-size: 24pt; font-weight: 900; letter-spacing: -0.5px; outline: none; border-bottom: 1px dashed transparent; }
+        .company-name:focus, .company-name:hover { border-bottom-color: rgba(255,255,255,0.3); }
+        
+        .company-subtitle { font-size: 9pt; color: var(--accent-color); margin-top: 5px; display: block; outline: none; border-bottom: 1px dashed transparent; }
+        .company-subtitle:focus, .company-subtitle:hover { border-bottom-color: var(--accent-color); }
+
+        .meta-box {
+            background: rgba(0, 0, 0, 0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 15px; border-radius: 4px;
+            font-size: 10pt; min-width: 150px;
+        }
+        .meta-row { display: flex; justify-content: space-between; margin-bottom: 5px; color: white; }
+        .meta-value { font-weight: bold; min-width: 100px; text-align: left; border-bottom: 1px dashed rgba(255,255,255,0.3); outline: none; direction: ltr; }
+
+        /* --- Stamp & Watermark --- */
+        .stamp-box-wrapper { 
+            position: absolute; 
+            bottom: 35mm; /* Higher than footer (25mm) */
+            left: 15mm; 
+            z-index: 60; 
+        }
+        
+        .stamp-label {
+            width: 45mm; height: 40mm; border: 2px dashed #cbd5e1; border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; background: rgba(255,255,255,0.8); transition: 0.2s; overflow: hidden; position: relative;
+        }
+        .stamp-label:hover { border-color: var(--primary-color); background: white; }
+        .stamp-preview { width: 100%; height: 100%; object-fit: contain; display: none; }
+        .stamp-label.has-image { border: none; background: transparent; }
+        .stamp-label.has-image span { display: none; }
+        .stamp-label.has-image img { display: block; }
+
+        .watermark {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 80pt; font-weight: 900; color: rgba(0, 0, 0, 0.03); pointer-events: none; white-space: nowrap; z-index: 0;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px);
+        }
+        .modal-box {
+            background: white; width: 600px; max-width: 90%; border-radius: 12px; padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; }
+        .theme-circle {
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s;
+        }
+        .theme-circle:hover { transform: scale(1.1); border-color: #333; }
+        .theme-circle.active { border-color: #000; box-shadow: 0 0 0 2px white, 0 0 0 4px #000; }
+
+        /* --- PRINT STYLES (FIXED) --- */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .editor-toolbar, .modal-overlay, #langToggleBtn, #creditBtn { display: none !important; }
+            
+            /* CRITICAL FIX: Reset positioning so fixed children relate to the page, not the container */
+            .main-container { 
+                width: 100%; margin: 0; box-shadow: none; display: block;
+                position: static !important; /* Forces fixed children to be relative to the viewport (paper) */
+                overflow: visible !important;
+            }
+            
+            @page { size: A4; margin: 0; }
+            
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            
+            /* These will now repeat on every page because their parent is static */
+            .header-fixed { 
+                position: fixed; top: 0; left: 0; width: 100%; 
+                z-index: 1000; 
+            }
+            .footer-fixed { 
+                position: fixed; bottom: 0; left: 0; width: 100%; 
+                z-index: 1000; 
+            }
+            
+            /* Stamp position adjustment for print context */
+            .stamp-box-wrapper {
+                position: fixed; /* Use fixed in print to ensure it repeats if we wanted, or absolute to page */
+                bottom: 35mm;
+                left: 15mm;
+                z-index: 1000;
+            }
+
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            .stamp-label:not(.has-image) { border: none !important; opacity: 0 !important; }
+        }
+    </style>
+</head>
+<body onclick="closeMenus(event)">
+
+    <!-- Language Toggle -->
+    <div class="fixed bottom-5 right-5 z-50" id="langToggleBtn">
+        <button onclick="toggleLanguage()" class="bg-white px-4 py-2 rounded-full shadow-lg border border-gray-200 hover:scale-105 transition font-bold text-sm flex items-center gap-2 text-slate-700">
+            <i class="fas fa-globe"></i> <span id="langLabel">English</span>
+        </button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="editor-toolbar">
+        
+        <!-- Group 1: File & Archive -->
+        <div class="toolbar-section">
+            <div>
+                <span class="section-label" data-key="archive">آرشیو</span>
+                <div class="flex items-center gap-1">
+                    <select id="templateSelector" onchange="handleTemplateChange(this.value)" class="select-clean w-[140px]" title="آرشیو فایل‌ها">
+                        <option value="" disabled selected data-key="selectFile">-- فایل --</option>
+                    </select>
+                    <button class="tool-btn" onclick="saveNewTemplate()" title="Save"><i class="fas fa-save text-green-600"></i></button>
+                    <button class="tool-btn hidden" id="deleteBtn" onclick="deleteSelectedTemplate()" title="Delete"><i class="fas fa-trash text-red-500"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group 2: AI Tools -->
+        <div class="toolbar-section">
+            <div>
+                <span class="section-label" data-key="aiTitle">هوش مصنوعی</span>
+                <div class="flex items-center gap-2">
+                    <button class="tool-btn btn-ai" onclick="openAIModal('draft')" id="btnDraft" title="تولید خودکار متن نامه و قرارداد"><i class="fas fa-pen-nib"></i> <span data-key="draft">نگارش</span></button>
+                    <button class="tool-btn btn-ai hidden md:flex" onclick="openAIModal('formalize')" id="btnFormalize" title="تبدیل متن عامیانه به رسمی"><i class="fas fa-graduation-cap"></i> <span data-key="formalize">رسمی</span></button>
+                    <button class="tool-btn btn-ai hidden md:flex" onclick="openAIModal('review')" id="btnReview" title="بررسی حقوقی و خطایابی"><i class="fas fa-gavel"></i> <span data-key="review">بررسی</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group 3: Formatting -->
+        <div class="toolbar-section">
+            <div>
+                <span class="section-label" data-key="format">فرمت متن</span>
+                <div class="flex items-center gap-2">
+                    <!-- Font Size Selection -->
+                    <div class="flex items-center gap-1 border border-gray-200 rounded-lg px-2 h-9 bg-gray-50">
+                        <span class="text-xs text-gray-400 font-bold" data-key="sizeLabel">Size:</span>
+                        <select onchange="applyFontSize(this.value)" class="bg-transparent outline-none text-sm font-bold w-12 text-center" id="fontSizeSelect" title="سایز فونت">
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12" selected>12</option>
+                            <option value="14">14</option>
+                            <option value="16">16</option>
+                            <option value="18">18</option>
+                            <option value="20">20</option>
+                            <option value="22">22</option>
+                            <option value="24">24</option>
+                            <option value="26">26</option>
+                            <option value="28">28</option>
+                            <option value="36">36</option>
+                            <option value="48">48</option>
+                            <option value="72">72</option>
+                        </select>
+                    </div>
+
+                    <div class="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                        <button class="tool-btn w-8 h-8 rounded hover:bg-white" onclick="formatDoc('bold')" title="Bold"><i class="fas fa-bold text-xs"></i></button>
+                        <button class="tool-btn w-8 h-8 rounded hover:bg-white" onclick="formatDoc('italic')" title="Italic"><i class="fas fa-italic text-xs"></i></button>
+                        <button class="tool-btn w-8 h-8 rounded hover:bg-white" onclick="formatDoc('underline')" title="Underline"><i class="fas fa-underline text-xs"></i></button>
+                    </div>
+
+                    <!-- Color Picker -->
+                    <div class="relative">
+                        <button class="tool-btn w-9 h-9 border border-gray-200" onmousedown="saveSelection()" onclick="toggleColorMenu(event)" title="Text Color">
+                            <i class="fas fa-font" style="color: #333; border-bottom: 3px solid currentColor; height: 16px; display: flex; align-items: center;" id="colorIcon"></i>
+                        </button>
+                        <div id="textColorMenu" class="color-menu">
+                            <div class="color-dot bg-black" onmousedown="applyTextColor('#000000', event)"></div>
+                            <div class="color-dot bg-gray-600" onmousedown="applyTextColor('#4b5563', event)"></div>
+                            <div class="color-dot bg-red-700" onmousedown="applyTextColor('#b91c1c', event)"></div>
+                            <div class="color-dot bg-blue-800" onmousedown="applyTextColor('#1e40af', event)"></div>
+                            <div class="color-dot bg-green-700" onmousedown="applyTextColor('#15803d', event)"></div>
+                            <div class="color-dot bg-purple-700" onmousedown="applyTextColor('#7e22ce', event)"></div>
+                            <div class="color-dot bg-orange-700" onmousedown="applyTextColor('#c2410c', event)"></div>
+                            <div class="color-dot bg-teal-700" onmousedown="applyTextColor('#0f766e', event)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group 4: Settings & Export -->
+        <div class="toolbar-section">
+            <div>
+                <span class="section-label" data-key="settings">تنظیمات</span>
+                <div class="flex items-center gap-1">
+                    <button class="tool-btn text-indigo-600" onclick="openThemeModal()" title="تغییر رنگ سازمانی" id="btnTheme"><i class="fas fa-palette"></i></button>
+                    <button class="tool-btn text-gray-500" onclick="openSettings()" title="تنظیمات API" id="btnSettings"><i class="fas fa-cog"></i></button>
+                    
+                    <button class="tool-btn text-blue-600 ml-2" onclick="exportTemplates()" title="پشتیبان‌گیری" id="btnBackup"><i class="fas fa-download"></i></button>
+                    <label class="tool-btn text-amber-600 cursor-pointer" title="بازگردانی" id="btnRestore">
+                        <i class="fas fa-upload"></i>
+                        <input type="file" accept=".json" class="hidden" onchange="importTemplates(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Action + Credit -->
+        <div class="mr-auto rtl:mr-auto ltr:ml-auto flex items-center gap-3 pl-4">
+            <!-- Credit Inside Toolbar -->
+            <a href="https://github.com/ahmadsalamifar" target="_blank" class="hidden md:flex items-center gap-2 text-gray-400 hover:text-gray-700 transition px-2 py-1 rounded-md text-xs decoration-transparent">
+                <i class="fab fa-github text-lg"></i>
+                <div class="flex flex-col items-start leading-none">
+                    <span class="text-[9px] opacity-70">Created by</span>
+                    <span class="font-bold">Ahmad Salamifar</span>
+                </div>
+            </a>
+            
+            <div class="w-[1px] h-8 bg-gray-200 mx-1"></div>
+
+            <span id="saveStatus" class="text-xs text-green-600 font-bold hidden opacity-0 transition-opacity"><i class="fas fa-check"></i> <span data-key="saved">ذخیره شد</span></span>
+            <button class="tool-btn bg-slate-800 text-white hover:bg-slate-700 border-slate-800 w-10 h-10 shadow-lg" onclick="printDoc()" title="Print / PDF"><i class="fas fa-print"></i></button>
+        </div>
+    </div>
+
+    <!-- AI Modal -->
+    <div class="modal-overlay" id="aiModal">
+        <div class="modal-box">
+            <div class="flex items-center gap-2 text-purple-700 font-bold text-lg mb-4">
+                <i class="fas fa-robot"></i> <span data-key="aiTitle">دستیار هوشمند</span>
+            </div>
+            <div class="mb-4">
+                <p id="aiPromptLabel" class="text-sm text-gray-600 mb-2">Prompt:</p>
+                <textarea id="aiPromptInput" class="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none" placeholder="..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <span id="aiLoading" class="text-sm text-purple-600 font-bold self-center hidden"><i class="fas fa-spinner fa-spin"></i> <span data-key="processing">در حال پردازش...</span></span>
+                <button class="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-700" onclick="closeAIModal()" data-key="cancel">انصراف</button>
+                <button class="px-4 py-2 rounded bg-purple-600 hover:bg-purple-700 text-white" onclick="runGemini()" data-key="run">اجرا کن ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-box w-[400px]">
+            <div class="flex items-center gap-2 text-gray-800 font-bold text-lg mb-4">
+                <i class="fas fa-cog"></i> <span data-key="settings">تنظیمات</span>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-1" data-key="apiKeyLabel">کلید API:</label>
+                <input type="password" id="apiKeyInput" class="w-full p-2 border rounded font-mono text-sm" placeholder="AIzaSy...">
+                <p class="text-xs text-gray-400 mt-2" data-key="keyNote">کلید شما فقط در مرورگر ذخیره می‌شود.</p>
+                
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span data-key="getKeyLink">دریافت کلید رایگان از Google AI Studio</span>
+                    </a>
+                    <p class="text-xs text-gray-400 mt-1" data-key="getKeyDesc">برای استفاده از هوش مصنوعی، نیاز به یک کلید رایگان دارید.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button class="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-700" onclick="document.getElementById('settingsModal').style.display='none'" data-key="close">بستن</button>
+                <button class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white" onclick="saveSettings()" data-key="save">ذخیره</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Modal -->
+    <div class="modal-overlay" id="themeModal">
+        <div class="modal-box w-[400px]">
+            <div class="flex items-center gap-2 text-blue-800 font-bold text-lg mb-4">
+                <i class="fas fa-palette"></i> <span data-key="styleTitle">انتخاب استایل سربرگ</span>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2" data-key="styleDesc">یک رنگ برای هدر و فوتر انتخاب کنید:</p>
+                <div class="theme-grid">
+                    <div class="theme-circle" style="background: #001f3f;" onclick="setTheme('#001f3f')"></div> 
+                    <div class="theme-circle" style="background: #1e3a8a;" onclick="setTheme('#1e3a8a')"></div> 
+                    <div class="theme-circle" style="background: #047857;" onclick="setTheme('#047857')"></div> 
+                    <div class="theme-circle" style="background: #b91c1c;" onclick="setTheme('#b91c1c')"></div> 
+                    <div class="theme-circle" style="background: #374151;" onclick="setTheme('#374151')"></div> 
+                    <div class="theme-circle" style="background: #000000;" onclick="setTheme('#000000')"></div> 
+                    <div class="theme-circle" style="background: #7c3aed;" onclick="setTheme('#7c3aed')"></div> 
+                    <div class="theme-circle" style="background: #c2410c;" onclick="setTheme('#c2410c')"></div> 
+                    
+                    <div class="theme-circle" style="background: white; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; position: relative;">
+                        <i class="fas fa-plus text-gray-400"></i>
+                        <input type="color" onchange="setTheme(this.value)" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button class="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-700" onclick="document.getElementById('themeModal').style.display='none'" data-key="close">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paper Structure -->
+    <div class="main-container">
+        
+        <!-- Fixed Header (Positioned absolutely/fixed for screen/print) -->
+        <div class="header-fixed">
+            <div class="header-bg"></div>
+            <div class="header-content">
+                <div>
+                    <h1 class="company-name" contenteditable="true" id="headerTitle" oninput="saveConfig()">عنوان شرکت شما</h1>
+                    <span class="company-subtitle" contenteditable="true" id="headerSubtitle" oninput="saveConfig()">توضیحات سربرگ (برای ویرایش کلیک کنید)</span>
+                </div>
+                <div class="meta-box">
+                    <div class="meta-row">
+                        <span class="opacity-90 ml-2 text-sm" data-key="date">تاریخ:</span>
+                        <span class="meta-value" id="dateField" contenteditable="true">1403/--/--</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="opacity-90 ml-2 text-sm" data-key="number">شماره:</span>
+                        <span class="meta-value" id="numField" contenteditable="true">-----</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="opacity-90 ml-2 text-sm" data-key="attach">پیوست:</span>
+                        <span class="meta-value" id="attachField" contenteditable="true" data-key="noAttach">ندارد</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table for content flow (Ensures spaces are reserved for fixed header/footer on every page) -->
+        <table class="print-layout">
+            <thead class="print-header">
+                <tr>
+                    <td>
+                        <div class="header-space">&nbsp;</div>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="content-body" contenteditable="true" id="editor" oninput="autoSaveCurrent()">
+                            <p id="placeholder" style="color: black; margin-top: 0; text-align: inherit;">
+                                [برای شروع تایپ کنید یا از هوش مصنوعی کمک بگیرید...]
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot class="print-footer">
+                <tr>
+                    <td>
+                        <div class="footer-space">&nbsp;</div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="watermark" id="watermark">COMPANY NAME</div>
+        
+        <!-- Moved Stamp Wrapper Outside of Footer Content -->
+        <div class="stamp-box-wrapper">
+            <label class="stamp-label" id="stampLabel">
+                <input type="file" class="hidden" accept="image/*" onchange="loadStamp(event)">
+                <span class="text-xs text-gray-400 text-center font-bold" data-key="stampPlace">محل مهر و امضا<br>(کلیک کنید)</span>
+                <img src="" class="stamp-preview" id="stampImg">
+            </label>
+        </div>
+
+        <!-- Fixed Footer -->
+        <div class="footer-fixed">
+            <div class="footer-content">
+                <div class="flex items-center gap-6 text-sm text-slate-600 w-full justify-end pl-[50mm] rtl:pl-[50mm] ltr:pr-[50mm]">
+                    <div class="flex items-center gap-2">
+                        <div class="footer-icon"></div>
+                        <span contenteditable="true" class="footer-editable" id="footerText1" oninput="saveConfig()">آدرس: خیابان نمونه، پلاک ۱</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="footer-icon"></div>
+                        <span contenteditable="true" class="footer-editable" id="footerText2" oninput="saveConfig()">تلفن: ۰۲۱-۱۲۳۴۵۶۷۸</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Translations ---
+        const translations = {
+            fa: {
+                archive: "آرشیو",
+                selectFile: "-- انتخاب فایل --",
+                draft: "نگارش",
+                formalize: "رسمی‌سازی",
+                review: "بررسی",
+                saved: "ذخیره شد",
+                aiTitle: "هوش مصنوعی",
+                format: "فرمت متن",
+                processing: "در حال پردازش...",
+                cancel: "انصراف",
+                run: "اجرا کن ✨",
+                settings: "تنظیمات",
+                apiKeyLabel: "کلید API:",
+                keyNote: "کلید شما فقط در مرورگر ذخیره می‌شود.",
+                getKeyLink: "دریافت کلید رایگان از Google AI Studio",
+                getKeyDesc: "برای استفاده از هوش مصنوعی، نیاز به یک کلید رایگان دارید.",
+                close: "بستن",
+                save: "ذخیره",
+                date: "تاریخ:",
+                number: "شماره:",
+                attach: "پیوست:",
+                noAttach: "ندارد",
+                stampPlace: "محل مهر و امضا\n(کلیک کنید)",
+                btnLang: "English",
+                placeholder: "[برای شروع تایپ کنید یا از هوش مصنوعی کمک بگیرید...]",
+                promptDraft: "موضوع نامه یا قرارداد را بنویسید:",
+                promptFormal: "متن خود را برای رسمی‌سازی اینجا کپی کنید:",
+                promptReview: "متن قرارداد را برای بررسی حقوقی وارد کنید:",
+                deleteConfirm: "آیا حذف شود؟",
+                saveName: "نام فایل را وارد کنید:",
+                savedMsg: "ذخیره شد.",
+                styleBtn: "استایل",
+                styleTitle: "انتخاب استایل سربرگ",
+                styleDesc: "یک رنگ برای هدر و فوتر انتخاب کنید:",
+                sizeLabel: "سایز:",
+                tipDraft: "تولید خودکار متن نامه و قرارداد",
+                tipFormalize: "تبدیل متن عامیانه به رسمی",
+                tipReview: "بررسی حقوقی و خطایابی",
+                tipTheme: "تغییر رنگ سازمانی",
+                tipSettings: "تنظیمات API",
+                tipBackup: "پشتیبان‌گیری",
+                tipRestore: "بازگردانی",
+                tipSave: "ذخیره",
+                tipDelete: "حذف"
+            },
+            en: {
+                archive: "Archive",
+                selectFile: "-- Select File --",
+                draft: "Draft",
+                formalize: "Formalize",
+                review: "Review",
+                saved: "Saved",
+                aiTitle: "AI Tools",
+                format: "Text Format",
+                processing: "Processing...",
+                cancel: "Cancel",
+                run: "Run ✨",
+                settings: "Settings",
+                apiKeyLabel: "API Key:",
+                keyNote: "Your key is stored locally in the browser.",
+                getKeyLink: "Get free key from Google AI Studio",
+                getKeyDesc: "You need a free API key to use AI features.",
+                close: "Close",
+                save: "Save",
+                date: "Date:",
+                number: "No:",
+                attach: "Attach:",
+                noAttach: "None",
+                stampPlace: "Stamp & Signature\n(Click here)",
+                btnLang: "فارسی",
+                placeholder: "[Start typing or use AI assistant...]",
+                promptDraft: "Describe the letter or contract topic:",
+                promptFormal: "Paste text to formalize:",
+                promptReview: "Paste contract text for legal review:",
+                deleteConfirm: "Delete this file?",
+                saveName: "Enter file name:",
+                savedMsg: "Saved.",
+                styleBtn: "Theme",
+                styleTitle: "Select Letterhead Theme",
+                styleDesc: "Choose a color for header and footer:",
+                sizeLabel: "Size:",
+                tipDraft: "Auto-generate letter or contract",
+                tipFormalize: "Convert casual text to formal",
+                tipReview: "Legal review and analysis",
+                tipTheme: "Change Corporate Color",
+                tipSettings: "API Settings",
+                tipBackup: "Backup",
+                tipRestore: "Restore",
+                tipSave: "Save",
+                tipDelete: "Delete"
+            }
+        };
+
+        // --- Global State ---
+        let currentLang = 'fa';
+        let currentAiMode = 'draft'; 
+        let savedSelection = null; 
+        const DEFAULT_AI_MODEL = 'gemini-2.0-flash-exp'; 
+        
+        const STORAGE_PREFIX = 'user_tpl_';
+        const CONFIG_KEY = 'letterhead_config';
+        const AUTOSAVE_KEY = 'current_autosave';
+        const THEME_KEY = 'letterhead_theme';
+        const SETTINGS_KEY = 'letterhead_settings';
+
+        // --- Initialization ---
+        document.addEventListener("DOMContentLoaded", () => {
+            updateDate();
+            initTemplateManager();
+            loadConfig(); 
+            loadTheme();
+            // loadSettings not needed on load, handled on open
+        });
+
+        // --- Selection & Formatting ---
+        function saveSelection() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                savedSelection = sel.getRangeAt(0);
+            }
+        }
+
+        function restoreSelection() {
+            const editor = document.getElementById('editor');
+            editor.focus();
+            if (savedSelection) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(savedSelection);
+            }
+        }
+
+        function formatDoc(cmd, value=null) {
+            document.execCommand(cmd, false, value);
+            document.getElementById('editor').focus();
+        }
+
+        function applyFontSize(ptSize) {
+            if (!ptSize) return;
+            if (document.getSelection) {
+                const sel = document.getSelection();
+                if (sel.rangeCount > 0) {
+                    document.execCommand("styleWithCSS", false, true);
+                    const text = sel.toString();
+                    if(text.length > 0) {
+                        document.execCommand("insertHTML", false, `<span style="font-size: ${ptSize}pt;">${text}</span>`);
+                    }
+                }
+            }
+            document.getElementById('editor').focus();
+        }
+
+        // --- Theme & Date ---
+        function updateDate() {
+            const dateField = document.getElementById('dateField');
+            if(currentLang === 'en') {
+                const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                dateField.innerText = today;
+                dateField.style.fontFamily = 'sans-serif';
+            } else {
+                const today = new Date().toLocaleDateString('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                dateField.innerText = today;
+                dateField.style.fontFamily = 'inherit';
+            }
+        }
+
+        function openThemeModal() { document.getElementById('themeModal').style.display = 'flex'; }
+        
+        function setTheme(color) {
+            document.documentElement.style.setProperty('--primary-color', color);
+            localStorage.setItem(THEME_KEY, color);
+            document.querySelectorAll('.theme-circle').forEach(c => c.classList.remove('active'));
+            if(event && event.target.classList.contains('theme-circle')) event.target.classList.add('active');
+        }
+
+        function loadTheme() {
+            const savedColor = localStorage.getItem(THEME_KEY);
+            if (savedColor) {
+                document.documentElement.style.setProperty('--primary-color', savedColor);
+            }
+        }
+
+        // --- Color Picker ---
+        function toggleColorMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('textColorMenu');
+            menu.classList.toggle('show');
+        }
+
+        function applyTextColor(color, e) {
+            e.preventDefault(); 
+            e.stopPropagation();
+            restoreSelection(); 
+            formatDoc('foreColor', color);
+            document.getElementById('colorIcon').style.color = color;
+            document.getElementById('textColorMenu').classList.remove('show');
+        }
+
+        function closeMenus(e) {
+            if (!e.target.closest('#textColorMenu') && !e.target.closest('button[onclick="toggleColorMenu(event)"]')) {
+                document.getElementById('textColorMenu').classList.remove('show');
+            }
+        }
+
+        // --- Config & Settings ---
+        function saveConfig() {
+            const config = {
+                title: document.getElementById('headerTitle').innerHTML,
+                subtitle: document.getElementById('headerSubtitle').innerHTML,
+                footer1: document.getElementById('footerText1').innerHTML,
+                footer2: document.getElementById('footerText2').innerHTML
+            };
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            document.getElementById('watermark').innerText = document.getElementById('headerTitle').innerText;
+        }
+
+        function loadConfig() {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            if (config) {
+                if(config.title) {
+                    document.getElementById('headerTitle').innerHTML = config.title;
+                    document.getElementById('watermark').innerText = document.getElementById('headerTitle').innerText;
+                }
+                if(config.subtitle) document.getElementById('headerSubtitle').innerHTML = config.subtitle;
+                if(config.footer1) document.getElementById('footerText1').innerHTML = config.footer1;
+                if(config.footer2) document.getElementById('footerText2').innerHTML = config.footer2;
+            }
+        }
+
+        function openSettings() {
+            const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+            document.getElementById('apiKeyInput').value = settings.apiKey || '';
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function saveSettings() {
+            const settings = {
+                apiKey: document.getElementById('apiKeyInput').value
+            };
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        // --- Language ---
+        function toggleLanguage() {
+            currentLang = currentLang === 'fa' ? 'en' : 'fa';
+            const isRtl = currentLang === 'fa';
+            
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+            document.body.classList.toggle('lang-en', !isRtl);
+            
+            // Update Text
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+            
+            document.getElementById('langLabel').innerText = translations[currentLang].btnLang;
+            
+            // Update Placeholders/Tooltips
+            const placeholder = document.getElementById('placeholder');
+            if(placeholder) placeholder.innerText = translations[currentLang].placeholder;
+            
+            ['btnDraft', 'btnFormalize', 'btnReview', 'btnTheme', 'btnSettings', 'btnBackup', 'btnRestore'].forEach(id => {
+                const key = 'tip' + id.replace('btn', '');
+                if(translations[currentLang][key]) document.getElementById(id).title = translations[currentLang][key];
+            });
+            
+            updateDate();
+            refreshUserTemplatesList();
+        }
+
+        // --- AI ---
+        function openAIModal(mode) {
+            const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+            if (!settings.apiKey) {
+                alert(currentLang === 'fa' ? 'کلید API یافت نشد.' : 'API Key not found.');
+                openSettings();
+                return;
+            }
+            currentAiMode = mode;
+            const promptInput = document.getElementById('aiPromptInput');
+            const promptLabel = document.getElementById('aiPromptLabel');
+            
+            promptInput.value = '';
+            const labelKey = mode === 'draft' ? 'promptDraft' : (mode === 'formalize' ? 'promptFormal' : 'promptReview');
+            promptLabel.innerText = translations[currentLang][labelKey];
+            
+            if (mode !== 'draft') {
+                const selection = window.getSelection().toString();
+                if(selection) promptInput.value = selection;
+            }
+
+            document.getElementById('aiModal').style.display = 'flex';
+            promptInput.focus();
+        }
+
+        function closeAIModal() {
+            document.getElementById('aiModal').style.display = 'none';
+            document.getElementById('aiLoading').style.display = 'none';
+        }
+
+        async function runGemini() {
+            const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+            const apiKey = settings.apiKey;
+            
+            const promptText = document.getElementById('aiPromptInput').value;
+            const loading = document.getElementById('aiLoading');
+            
+            if (!promptText) return;
+            loading.style.display = 'inline-block';
+
+            const langInst = currentLang === 'fa' ? "Persian" : "English";
+            let systemPrompt = `You are a professional ${langInst} business assistant. Output ONLY Valid HTML (p, ul, li, strong) suitable for a formal letter body. Do not include <html> or <body> tags. No markdown blocks.`;
+            
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_AI_MODEL}:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error?.message || 'API Error');
+
+                const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                
+                const editor = document.getElementById('editor');
+                if (editor.innerText.includes('[')) editor.innerHTML = ''; 
+                
+                const div = document.createElement('div');
+                div.innerHTML = generatedText;
+                
+                if (currentAiMode === 'review') {
+                    div.style.cssText = "background:#fff1f2; border-right:3px solid #e11d48; padding:10px; margin:10px 0; font-size:0.9em;";
+                    div.innerHTML = "<strong>Result:</strong><br>" + generatedText;
+                }
+                
+                editor.appendChild(div);
+                closeAIModal();
+                autoSaveCurrent();
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // --- Template Manager ---
+        function initTemplateManager() {
+            refreshUserTemplatesList();
+            const saved = localStorage.getItem(AUTOSAVE_KEY);
+            if (saved) applyData(JSON.parse(saved));
+        }
+
+        function refreshUserTemplatesList() {
+            const select = document.getElementById('templateSelector');
+            while (select.options.length > 1) select.remove(1);
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith(STORAGE_PREFIX)) {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.text = key.replace(STORAGE_PREFIX, '');
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        function saveNewTemplate() {
+            const name = prompt(translations[currentLang].saveName);
+            if (name) {
+                const data = {
+                    content: document.getElementById('editor').innerHTML,
+                    num: document.getElementById('numField').innerText,
+                    attach: document.getElementById('attachField').innerText
+                };
+                localStorage.setItem(STORAGE_PREFIX + name, JSON.stringify(data));
+                refreshUserTemplatesList();
+                alert(translations[currentLang].savedMsg);
+            }
+        }
+
+        function handleTemplateChange(val) {
+            const delBtn = document.getElementById('deleteBtn');
+            delBtn.style.display = val.startsWith(STORAGE_PREFIX) ? 'block' : 'none';
+            
+            const data = JSON.parse(localStorage.getItem(val));
+            if (data) applyData(data);
+        }
+
+        function deleteSelectedTemplate() {
+            const val = document.getElementById('templateSelector').value;
+            if (confirm(translations[currentLang].deleteConfirm)) {
+                localStorage.removeItem(val);
+                refreshUserTemplatesList();
+                document.getElementById('templateSelector').value = "";
+            }
+        }
+
+        function applyData(data) {
+            document.getElementById('editor').innerHTML = data.content;
+            if(data.num) document.getElementById('numField').innerText = data.num;
+            if(data.attach) document.getElementById('attachField').innerText = data.attach;
+        }
+
+        function autoSaveCurrent() {
+            const data = {
+                content: document.getElementById('editor').innerHTML,
+                num: document.getElementById('numField').innerText,
+                attach: document.getElementById('attachField').innerText
+            };
+            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+            
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'inline';
+            status.style.opacity = '1';
+            setTimeout(() => status.style.opacity = '0', 1000);
+        }
+
+        // --- Backup / Export ---
+        function exportTemplates() {
+            const data = {};
+            for(let i=0; i<localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.startsWith(STORAGE_PREFIX) || key === CONFIG_KEY || key === AUTOSAVE_KEY || key === THEME_KEY || key === SETTINGS_KEY) {
+                    data[key] = localStorage.getItem(key);
+                }
+            }
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `backup-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        }
+
+        function importTemplates(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const data = JSON.parse(ev.target.result);
+                Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+                refreshUserTemplatesList();
+                loadConfig(); 
+                loadTheme();
+                initTemplateManager(); 
+                alert(currentLang === 'fa' ? 'بازیابی شد.' : 'Restored.');
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+
+        // --- Stamp Logic ---
+        function loadStamp(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('stampImg').src = ev.target.result;
+                document.getElementById('stampLabel').classList.add('has-image');
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function printDoc() { window.print(); }
+    </script>
+</body>
+</html>
